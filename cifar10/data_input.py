@@ -18,14 +18,14 @@ def maybe_download(filename, work_directory):
         print('Successfully downloaded', filename, statinfo.st_size, 'bytes.')
     return filepath
 
-def dense_to_one_hot(labels_dense, num_classes=10):
+def dense_to_one_hot(labels_dense, num_classes):
     num_labels = labels_dense.shape[0]
     index_offset = np.arange(num_labels) * num_classes
     labels_one_hot = np.zeros( (num_labels, num_classes) )
     labels_one_hot.flat[index_offset + labels_dense.ravel()] = 1
     return labels_one_hot
 
-def extract_datas(filename, one_hot=False):
+def extract_datas(filename, one_hot=False, num_classes=10):
     print('Extracting', filename)
     with tarfile.open(filename) as tar:
         train = {'data':np.array([]), 'labels':[], 'batch_label':[], 'filenames':[]}
@@ -41,8 +41,8 @@ def extract_datas(filename, one_hot=False):
         inner_filename='cifar-10-batches-py/test_batch'
         print('Loading', inner_filename)
         test = cPickle.load( tar.extractfile(inner_filename) )
-        train['labels'] = dense_to_one_hot(np.array(train['labels'])) if one_hot else np.array( train['labels'] ) 
-        test['labels'] =  dense_to_one_hot(np.array(test['labels'])) if one_hot else np.array( test['labels'] )
+        train['labels'] = dense_to_one_hot(np.array(train['labels']), num_classes) if one_hot else np.array( train['labels'] ) 
+        test['labels'] =  dense_to_one_hot(np.array(test['labels']), num_classes) if one_hot else np.array( test['labels'] )
     return {'train':train, 'test':test}
 
 class DataSet(object):
@@ -90,12 +90,17 @@ def read_data_sets(train_dir, one_hot=False):
     class DataSets(object):
         pass
     data_sets = DataSets()
+    data_sets.names = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+    data_sets.width = 32
+    data_sets.height = 32
+    data_sets.depth = 3
+    data_sets.input_size = data_sets.width * data_sets.height * data_sets.depth
+    data_sets.num_classes = len(data_sets.names) # 10
 
     local_file = maybe_download('cifar-10-python.tar.gz', train_dir)
-    datas = extract_datas(local_file, one_hot)
+    datas = extract_datas(local_file, one_hot, data_sets.num_classes)
 
-    data_sets.names = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
     data_sets.train = DataSet(datas['train']['data'], datas['train']['labels'])
     data_sets.test  = DataSet(datas['test']['data'],  datas['test']['labels'])
-
+    
     return data_sets
