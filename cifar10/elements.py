@@ -7,8 +7,7 @@ def _convolution(name, input_tensor, kernel_shape, stddev=1e-4, wd=0.0):
         biases = helper._variable('biases', [kernel_shape[-1]], tf.constant_initializer(0.0))
 
         conv = tf.nn.conv2d(input_tensor, kernel, [1, 1, 1, 1], padding='SAME')
-        bias = tf.nn.bias_add(conv, biases)
-        output_tensor = tf.nn.relu(bias, name=scope.name)
+        output_tensor = tf.nn.bias_add(conv, biases)
         helper._activation_summary(output_tensor)
     return output_tensor
 
@@ -24,25 +23,14 @@ def _local_response_normalization(name, input_tensor, depth_radius=4, bias=1.0, 
         helper._activation_summary(output_tensor)
     return output_tensor
 
-def _fullconnect_relu(name, input_tensor, hidden_nodes, stddev=0.04, wd=0.004):
-    with tf.variable_scope(name) as scope:
-        input_tensor_size = reduce(lambda x,y: x*y, input_tensor.get_shape()[1:].as_list())
-        weights = helper._variable_with_weight_decay('weights', shape=[input_tensor_size, hidden_nodes], stddev=stddev, wd=wd)
-        biases = helper._variable('biases', [hidden_nodes], tf.constant_initializer(0.1))
-
-        reshaped = tf.reshape(input_tensor, [-1, input_tensor_size])
-        output_tensor = tf.nn.relu_layer(reshaped, weights, biases, name=scope.name)
-        helper._activation_summary(output_tensor)
-    return output_tensor
-
-def _fullconnect_linear(name, input_tensor, hidden_nodes, stddev=0.04, wd=0.0):
+def _fullconnect(name, input_tensor, hidden_nodes, stddev=0.04, wd=0.0):
     with tf.variable_scope(name) as scope:
         input_tensor_size = reduce(lambda x,y: x*y, input_tensor.get_shape()[1:].as_list())
         weights = helper._variable_with_weight_decay('weights', shape=[input_tensor_size, hidden_nodes], stddev=stddev, wd=wd)
         biases = helper._variable('biases', [hidden_nodes], tf.constant_initializer(0.0))
 
-        output_tensor = tf.nn.xw_plus_b(input_tensor, weights, biases, name=scope.name)
+        reshaped = tf.reshape(input_tensor, [-1, input_tensor_size])
+        output_tensor = tf.nn.xw_plus_b(reshaped, weights, biases, name=scope.name)
         helper._activation_summary(output_tensor)
-
     return output_tensor
 
