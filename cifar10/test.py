@@ -1,17 +1,22 @@
+import images
+filenames = ['../datas/label0.txt', '../datas/label1.txt']
+reader = images.Reader(filenames, batch_size=8, width=32, height=32, filetype='png', min_after_dequeue=1)
+batch = reader.batch
+
 import tensorflow as tf
-
-image = tf.image.decode_jpeg(tf.read_file('../datas/sample.jpg'), channels=3)
-image = tf.cast( tf.image.resize_images(image, 32, 32), tf.float32 )
-images = tf.reshape(image, [-1, 32, 32, 3])
-
 from cifar10_architecture import Cifar10Architecture
 
 with tf.Session() as sess:
-    nn = Cifar10Architecture({}, sess)
-    output = nn.classification(images)
-    values, indices = tf.nn.top_k(output, 1)
+    reader.start(sess)
+    try:
+        for i in range(10):
+            _ = sess.run([batch.images, batch.labels])
+            print _[1]
+    except tf.errors.OutOfRangeError:
+        print('Done training -- epoch limit reached')
+    finally:
+        reader.stop()
+    
+    reader.join()
 
-    sess.run( tf.initialize_all_variables() )
-    prediction = sess.run( [output, indices] )
-    print prediction
 
