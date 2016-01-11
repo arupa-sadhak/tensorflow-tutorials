@@ -25,6 +25,7 @@ def _pipeline(filenames, batch_size, width, height, channels=3, filetype='png', 
     red_list = [_read_csv_format(filename_queue, width, height, channels, filetype) for _ in range(read_threads)]
     capacity = min_after_dequeue + 3 * batch_size
     image_batch, label_batch = tf.train.shuffle_batch_join(red_list, batch_size, capacity, min_after_dequeue)
+    tf.image_summary('images', image_batch, max_images=16)
     return image_batch, label_batch
 
 class Reader(object):

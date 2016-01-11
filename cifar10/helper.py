@@ -1,12 +1,12 @@
 import re
 import tensorflow as tf
 
-def _variable(name, shape, initializer, device='/cpu:0'):
+def _variable(name, shape, initializer, device='/gpu:0'):
     with tf.device(device):
         var = tf.get_variable(name, shape, initializer=initializer)
     return var
 
-def _variable_with_weight_decay(name, shape, stddev, wd, device='/cpu:0'):
+def _variable_with_weight_decay(name, shape, stddev, wd, device='/gpu:0'):
     var = _variable(name, shape, tf.truncated_normal_initializer(stddev=stddev), device)
     if wd:
         weight_decay = tf.mul(tf.nn.l2_loss(var), wd, name='weight_loss')
@@ -17,6 +17,14 @@ def _activation_summary(x):
     tensor_name = re.sub('%s_[0-9]*/' % 'tower', '', x.op.name)
     tf.histogram_summary(tensor_name + '/activations', x)
     tf.scalar_summary(tensor_name + '/sparsity', tf.nn.zero_fraction(x))
+
+def _multichannel_image_summary(name, images, perm=[0, 3, 1, 2], max_summary_images=16):
+    _min = tf.reduce_min(images)
+    _max = tf.reduce_max(images)
+    _ = tf.mul(tf.div(tf.add(images, _min), tf.sub(_max, _min)), 255.0)
+    _ = tf.transpose(_, perm=perm)
+    shape = _.get_shape().as_list()
+    tf.image_summary(name, tf.reshape(tf.transpose(_, perm=perm), [reduce(lambda x,y:x*y, shape)/(shape[3]*shape[2]), shape[2], shape[3], 1]), max_images=max_summary_images)
 
 def _sparse_to_dense(labels, num_classes):
     sparse_labels = tf.reshape(labels, [-1, 1])

@@ -9,6 +9,7 @@ def _convolution(name, input_tensor, kernel_shape, stddev=1e-4, wd=0.0):
         conv = tf.nn.conv2d(input_tensor, kernel, [1, 1, 1, 1], padding='SAME')
         output_tensor = tf.nn.bias_add(conv, biases)
         helper._activation_summary(output_tensor)
+        helper._multichannel_image_summary(scope.name + '/weights', kernel, perm=[3, 2, 1, 0])
     return output_tensor
 
 def _pooling(name, input_tensor, kernel_shape, strides):
