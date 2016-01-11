@@ -6,7 +6,7 @@ class Architecture(object):
     def __init__(self, session):
         self._session = session
 
-    def forward(self, images):
+    def forward(self, images, reuse=False):
         pass
 
     def classification(self, logits):

@@ -29,13 +29,16 @@ def _pipeline(filenames, batch_size, width, height, channels=3, filetype='png', 
     return image_batch, label_batch
 
 class Reader(object):
-    def __init__(self, filenames, batch_size, width, height, channels=3, filetype='png', shuffle=True, read_threads=None, min_after_dequeue=None, num_epochs=None):
+    def __init__(self):
+        self.batch = {}
+
+    def attach(self, name, filenames, batch_size, width, height, channels=3, filetype='png', shuffle=True, read_threads=None, min_after_dequeue=None, num_epochs=None):
         images, labels = _pipeline(filenames, batch_size, width, height, channels, filetype, shuffle, read_threads, min_after_dequeue, num_epochs)
         class Batch(object):
             pass
-        self.batch = Batch()
-        self.batch.images = images
-        self.batch.labels = labels
+        self.batch[name] = Batch()
+        self.batch[name].images = images
+        self.batch[name].labels = labels
 
     def start(self, sess):
         self.sess = sess
