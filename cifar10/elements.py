@@ -40,3 +40,10 @@ def _fullconnect(name, input_tensor, hidden_nodes, stddev=0.04, wd=0.0, reuse=Fa
             helper._activation_summary(output_tensor)
     return output_tensor
 
+def _dropout(name, input_tensor, hidden_nodes, keep_prob_tensor, stddev=0.04, wd=0.0, reuse=False):
+    with tf.variable_scope(name, reuse=reuse) as scope:
+        output_tensor = tf.nn.dropout(_fullconnect(name+'_fullconnect', input_tensor, hidden_nodes, stddev, wd, reuse), keep_prob_tensor)
+        if not reuse:
+            helper._activation_summary(output_tensor)
+    return output_tensor
+

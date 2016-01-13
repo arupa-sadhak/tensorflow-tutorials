@@ -27,10 +27,8 @@ class Architecture(object):
         _accuracy = corrects_count / num_samples
         return _accuracy
 
-    def train(self, images, labels):
-        with tf.name_scope('network') as scope:
-            logits = self.forward( images )
-            predictions = self.classification( logits )
+    def train(self, logits, labels):
+        predictions = self.classification( logits )
           
         with tf.name_scope('accuracy') as scope:
             accuracy = self.accuracy(predictions, labels, 1)
