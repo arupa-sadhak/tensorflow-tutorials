@@ -2,6 +2,7 @@ import images
 import helper
 from cifar10_architecture import Cifar10Architecture
 
+import os
 import math
 import time
 import tensorflow as tf
@@ -22,8 +23,11 @@ def main(args):
         with tf.name_scope('validation') as scope:
             valid_accuracy_op = network.accuracy( network.classification( network.forward(batch['valid'].images, reuse=True) ), batch['valid'].labels )
 
+        saver = tf.train.Saver(tf.all_variables())
+
         summary_op = tf.merge_all_summaries()
         summary_writer = tf.train.SummaryWriter(args.summary_path, graph_def=sess.graph_def)
+
         sess.run( tf.initialize_all_variables() )
         reader.start(sess)
     
@@ -57,7 +61,10 @@ def main(args):
                 elif step % 50 == 0:
                     summary_str = sess.run(summary_op)
                     summary_writer.add_summary(summary_str, step)
- 
+
+                if step % 1000 == 0 or (step+1) == args.max_iter:
+                    checkpoint_path = os.path.join(args.model_path, 'model.ckpt')
+                    saver.save(sess, checkpoint_path, global_step=step) 
         except tf.errors.OutOfRangeError:
             print('Done training -- epoch limit reached')
         finally:
@@ -68,9 +75,15 @@ def main(args):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--summary-path',       type=str,   required=True, help='/tmp/tensorflow/cifar10/description...')
-    parser.add_argument('-b', '--batch-size',         type=int,   default=128,   help='default:128')
-    parser.add_argument('-m', '--max-iter',           type=int,   default=10001, help='default:10001')
+    parser.add_argument('-p', '--summary-path',       type=str, required=True, help='/tmp/tensorflow/cifar10/description...')
+    parser.add_argument('-t', '--model-path',         type=str, required=True, help='./models/cifar10/description...')
+    parser.add_argument('-b', '--batch-size',         type=int, default=128,   help='default:128')
+    parser.add_argument('-m', '--max-iter',           type=int, default=10001, help='default:10001')
     args = parser.parse_args()
+
+    from tensorflow.python.platform import gfile
+    if gfile.Exists(args.model_path):
+        gfile.DeleteRecursively(args.model_path)
+    gfile.MakeDirs(args.model_path)
     
     main(args)
